@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,67 +81,66 @@ const Profile = () => {
       </div>
       
       <Card>
-        <CardHeader>
-          <Tabs defaultValue="courses">
-            <TabsList>
+        <Tabs defaultValue="courses">
+          <CardHeader className="pb-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="courses">My Courses</TabsTrigger>
-              <TabsTrigger value="followers">Followers</TabsTrigger>
-              <TabsTrigger value="following">Following</TabsTrigger>
+              <TabsTrigger value="bookings">My Bookings</TabsTrigger>
+              <TabsTrigger value="network">Network</TabsTrigger>
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
             </TabsList>
-          </Tabs>
-        </CardHeader>
-        <CardContent>
-          <TabsContent value="courses" className="mt-0">
-            {user.courses.length === 0 ? (
+          </CardHeader>
+          <CardContent>
+            <TabsContent value="courses" className="mt-0">
+              {user.courses.length === 0 ? (
+                <div className="py-8 text-center">
+                  <h3 className="text-lg font-medium mb-2">No Courses Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You haven't created any courses yet.
+                  </p>
+                  <Button>Upload Your First Course</Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {user.courses.map((course) => (
+                    <Card key={course.id}>
+                      <CardContent>
+                        {/* Course content */}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="bookings" className="mt-0">
               <div className="py-8 text-center">
-                <h3 className="text-lg font-medium mb-2">No Courses Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  You haven't created any courses yet.
+                <h3 className="text-lg font-medium mb-2">No Bookings Yet</h3>
+                <p className="text-muted-foreground">
+                  You haven't made any bookings yet.
                 </p>
-                <Button>Upload Your First Course</Button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {user.courses.map((course) => (
-                  <Card key={course.id}>
-                    <CardContent>
-                      {/* Course content */}
-                    </CardContent>
-                  </Card>
-                ))}
+            </TabsContent>
+            
+            <TabsContent value="network" className="mt-0">
+              <div className="py-8 text-center">
+                <h3 className="text-lg font-medium mb-2">No Network Yet</h3>
+                <p className="text-muted-foreground">
+                  Build your network by connecting with other users.
+                </p>
               </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="followers" className="mt-0">
-            <div className="py-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No Followers Yet</h3>
-              <p className="text-muted-foreground">
-                Build your profile and start teaching to attract followers.
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="following" className="mt-0">
-            <div className="py-8 text-center">
-              <h3 className="text-lg font-medium mb-2">Not Following Anyone Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Find teachers and follow them to keep track of their courses.
-              </p>
-              <Button>Find Teachers</Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="reviews" className="mt-0">
-            <div className="py-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No Reviews Yet</h3>
-              <p className="text-muted-foreground">
-                You'll see reviews from students after you teach your first course.
-              </p>
-            </div>
-          </TabsContent>
-        </CardContent>
+            </TabsContent>
+            
+            <TabsContent value="reviews" className="mt-0">
+              <div className="py-8 text-center">
+                <h3 className="text-lg font-medium mb-2">No Reviews Yet</h3>
+                <p className="text-muted-foreground">
+                  You'll see reviews from students after you teach your first course.
+                </p>
+              </div>
+            </TabsContent>
+          </CardContent>
+        </Tabs>
       </Card>
     </div>
   );
