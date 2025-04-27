@@ -13,7 +13,7 @@ import { auth, db } from "./firebase";
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, role: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, role: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
@@ -51,12 +51,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         followers: 0,
         reviews: 0,
         coins: 1000,
+        role: role, // Add role field
         createdAt: serverTimestamp()
       });
       
-      return { success: true };
+      return;
     } catch (error) {
-      // Rethrow to let the component handle different error types
       throw error;
     }
   };

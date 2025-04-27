@@ -345,6 +345,7 @@ const Profile = () => {
                       type="button"
                       className="ml-1 hover:text-destructive"
                       onClick={() => removeSkill(skill)}
+                      title={`Remove ${skill}`}
                     >
                       <X className="h-3 w-3" />
                     </button>

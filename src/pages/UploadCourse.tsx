@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Upload as UploadIcon } from "lucide-react";
+import { httpsCallable } from "firebase/functions";
+import { ref, uploadBytesResumable } from "firebase/storage";
+import { functions, storage } from "@/lib/firebase"; // Fixed import path
+
+// Define interface for the cloud function response
+interface CreateCourseResponse {
+  success: boolean;
+  courseId: string;
+}
 
 const UploadCourse = () => {
   // Form state
@@ -44,6 +52,7 @@ const UploadCourse = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (step === 1) {
       // Validate first step
       if (!title || !description || skillTags.length === 0 || !pricePerHour) {
@@ -60,66 +69,97 @@ const UploadCourse = () => {
       return;
     }
 
-    // Simulate upload progress for demo purposes
-    if (file) {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 5;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          alert("Course uploaded successfully!");
-          // Reset form
-          setTitle("");
-          setDescription("");
-          setPricePerHour("50");
-          setSkillTags([]);
-          setVideoUrl("");
-          setFile(null);
-          setUploadProgress(0);
-          setStep(1);
-        }
-      }, 200);
-    } else {
-      // Just using YouTube URL
-      alert("Course with YouTube URL added successfully!");
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setPricePerHour("50");
-      setSkillTags([]);
-      setVideoUrl("");
-      setFile(null);
-      setUploadProgress(0);
-      setStep(1);
-    }
+    // Show loading state
+    setUploadProgress(10);
     
-    // In a real app, this would upload to Firebase Storage and save metadata to Firestore
-    // const courseData = { title, description, skillTags, pricePerHour };
-    // const courseRef = await addDoc(collection(db, "courses"), courseData);
-    // if (file) {
-    //   const storageRef = ref(storage, `courses/${courseRef.id}`);
-    //   const uploadTask = uploadBytesResumable(storageRef, file);
-    //   uploadTask.on('state_changed', 
-    //     (snapshot) => {
-    //       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    //       setUploadProgress(progress);
-    //     },
-    //     (error) => {
-    //       console.error("Upload failed", error);
-    //     },
-    //     async () => {
-    //       const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-    //       await updateDoc(doc(db, "courses", courseRef.id), {
-    //         videoUrl: downloadURL
-    //       });
-    //       // Reset form...
-    //     }
-    //   );
-    // } else if (videoUrl) {
-    //   await updateDoc(doc(db, "courses", courseRef.id), { videoUrl });
-    //   // Reset form...
-    // }
+    try {
+      // Call the createCourse cloud function
+      const createCourseFn = httpsCallable<
+        {
+          title: string;
+          description: string;
+          price: number;
+          skillTags: string[];
+          videoUrl: string | null;
+        }, 
+        CreateCourseResponse
+      >(functions, 'createCourse');
+      
+      const result = await createCourseFn({
+        title,
+        description,
+        price: Number(pricePerHour),
+        skillTags,
+        videoUrl: videoUrl || null
+      });
+      
+      // Use destructuring to get courseId
+      const { courseId } = result.data;
+      
+      // If we have a file, upload it to storage
+      if (file) {
+        setUploadProgress(30);
+        
+        // Create a storage reference
+        const storageRef = ref(storage, `courses/${courseId}/video.mp4`);
+        
+        // Upload the file
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        
+        // Track progress
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(30 + (progress * 0.6)); // Scale to 30-90%
+          },
+          (error) => {
+            console.error("Upload failed", error);
+            alert("Failed to upload video file");
+            setUploadProgress(0);
+          },
+          async () => {
+            // Upload completed successfully
+            const videoPath = `courses/${courseId}/video.mp4`;
+            
+            // Update the course with the video path
+            const updateVideoFn = httpsCallable(functions, 'updateCourseVideo');
+            await updateVideoFn({ courseId, videoPath });
+            
+            // All done!
+            setUploadProgress(100);
+            alert("Course uploaded successfully!");
+            
+            // Reset form
+            setTitle("");
+            setDescription("");
+            setPricePerHour("50");
+            setSkillTags([]);
+            setVideoUrl("");
+            setFile(null);
+            setUploadProgress(0);
+            setStep(1);
+          }
+        );
+      } else {
+        // Just using YouTube URL
+        setUploadProgress(100);
+        alert("Course with YouTube URL added successfully!");
+        
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setPricePerHour("50");
+        setSkillTags([]);
+        setVideoUrl("");
+        setUploadProgress(0);
+        setStep(1);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+      alert("Failed to create course");
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -200,6 +240,7 @@ const UploadCourse = () => {
                           type="button"
                           className="ml-1 hover:text-destructive"
                           onClick={() => removeSkillTag(tag)}
+                          aria-label={`Remove ${tag} tag`} // Added accessible label
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -285,8 +326,8 @@ const UploadCourse = () => {
                           </div>
                           <div className="w-full bg-muted rounded-full h-2">
                             <div 
-                              className="bg-skill-purple h-2 rounded-full" 
-                              style={{ width: `${uploadProgress}%` }}
+                              className={`bg-skill-purple h-2 rounded-full progress-bar-width-${Math.round(uploadProgress)}`} 
+                              style={{ width: `${uploadProgress}%` }} // Leaving inline style for dynamic width
                             />
                           </div>
                         </div>

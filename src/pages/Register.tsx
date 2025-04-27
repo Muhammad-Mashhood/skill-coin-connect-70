@@ -93,7 +93,7 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      await signUp(values.email, values.password, values.fullName);
+      await signUp(values.email, values.password, values.fullName, values.role);
       
       toast({
         title: "Account created!",
