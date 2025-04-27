@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { Home, Search, Calendar, Upload, User, Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/lib/AuthContext";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -11,6 +11,8 @@ type SidebarProps = {
 
 const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
   const isMobile = useIsMobile();
+  const { currentUser } = useAuth();
+  const displayName = currentUser?.displayName || "Guest User";
   const sidebarClasses = isOpen
     ? "translate-x-0"
     : isMobile
@@ -117,10 +119,17 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-full bg-gray-200"></div>
             <div>
-              <p className="text-sm font-medium">Guest User</p>
-              <button className="text-xs text-skill-purple hover:underline">
-                Sign in
-              </button>
+              <p className="text-sm font-medium">{displayName}</p>
+              {!currentUser ? (
+                <Link
+                  to="/signin"
+                  className="text-xs text-skill-purple hover:underline"
+                >
+                  Sign in
+                </Link>
+              ) : (
+                <span className="text-xs text-muted-foreground">Signed in</span>
+              )}
             </div>
           </div>
         </div>

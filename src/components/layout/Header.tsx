@@ -1,4 +1,3 @@
-
 import { Menu, Bell, User } from "lucide-react";
 import {
   DropdownMenu,
@@ -10,12 +9,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
 
 type HeaderProps = {
   toggleSidebar: () => void;
 };
 
 const Header = ({ toggleSidebar }: HeaderProps) => {
+  const { currentUser } = useAuth();
+  const displayName = currentUser?.displayName || "Guest User";
+  const initials = displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('') || "GU";
+
   return (
     <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between h-16 px-4">
@@ -68,7 +75,7 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>GU</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
